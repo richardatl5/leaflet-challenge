@@ -1,4 +1,5 @@
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson"
+var faultlinequery = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
 
 
 d3.json(queryUrl, function(data) {
@@ -7,7 +8,7 @@ d3.json(queryUrl, function(data) {
   console.log(data.features)
 });
 
-function createFeatures(earthquakeData) {
+function createFeatures(earthquake_data) {
 
     function onEachFeature(feature, layer) {
       layer.bindPopup("<h3>" + feature.properties.place +
@@ -40,11 +41,11 @@ function createFeatures(earthquakeData) {
       }
     }
 
-    var earthquakes = L.geoJSON(earthquakeData, {
-        pointToLayer: function(earthquakeData, latlng) {
+    var earthquakes = L.geoJSON(earthquake_data, {
+        pointToLayer: function(earthquake_data, latlng) {
           return L.circle(latlng, {
-            radius: radiusSize(earthquakeData.properties.mag),
-            color: circleColor(earthquakeData.properties.mag),
+            radius: radiusSize(earthquake_data.properties.mag),
+            color: circleColor(earthquake_data.properties.mag),
             fillOpacity: 1
           });
         },
@@ -56,7 +57,6 @@ function createFeatures(earthquakeData) {
 
     function createMap(earthquakes) {
 
-// Define map layers
     
   var airmap = L.tileLayer("https://api.mapbox.com/styles/v1/mfatih72/ck30s2f5b19ws1cpmmw6zfumm/tiles/256/{z}/{x}/{y}?" + 
     "access_token=pk.eyJ1IjoibWZhdGloNzIiLCJhIjoiY2sycnMyaDVzMGJxbzNtbng0anYybnF0MSJ9.aIN8AYdT8vHnsKloyC-DDA", {
@@ -81,23 +81,20 @@ function createFeatures(earthquakeData) {
     accessToken: API_KEY
   });
 
-  // Create the faultline layer
-  var faultLine = new L.LayerGroup();
   
-  // Define a baseMaps object to hold the base layers
+  
+  var faultLine = new L.LayerGroup();
   var baseMaps = {
     "Air Map": airmap,
     "Light Map": lightmap,
     "Satellite Map": satellitemap
   };
 
-  // Create overlay object to hold the overlay layer
   var overlayMaps = {
     Earthquakes: earthquakes,
     FaultLines: faultLine
   };
 
-  // Create our map and give it the streetmap and earthquakes layers to display upon load
   var myMap = L.map("map", {
     center: [
       37.09, -95.71
@@ -106,17 +103,10 @@ function createFeatures(earthquakeData) {
     layers: [airmap, earthquakes, faultLine]
   });
 
-  // Create a layer control
-  // Pass in the baseMaps and overlayMaps
-  // Add the layer control to the map
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
   }).addTo(myMap);
-
-  // Query to retrieve the faultline data
-  var faultlinequery = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
   
-  // Create the faultlines and add them to the faultline layer
   d3.json(faultlinequery, function(data) {
     L.geoJSON(data, {
       style: function() {
@@ -125,7 +115,11 @@ function createFeatures(earthquakeData) {
     }).addTo(faultLine)
   })
 
-// Create legend
+
+
+
+
+
 var legend = L.control({
     position: "bottomleft"
 });
@@ -135,7 +129,6 @@ legend.onAdd = function(myMap) {
     grades = [0, 1, 2, 3, 4, 5],
     labels = [];
 
-// Create legend
 for (var i = 0; i < grades.length; i++) {
     div.innerHTML +=
         '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
@@ -146,7 +139,6 @@ return div;
 legend.addTo(myMap);
 }
 
-// Create color function
 function getColor(magnitude) {
 if (magnitude > 5) {
     return 'red'
